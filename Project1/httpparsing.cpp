@@ -14,7 +14,8 @@ HttpParsing::~HttpParsing(){}
 void HttpParsing::init(int connfd)
 {
     _reclen = recv(connfd, buf, BUF_SIZE, 0);
-    printf("http %d", _reclen);
+    printf("http %d\n", _reclen);
+    
     parseInternal(buf, _reclen);
 }
 
@@ -34,7 +35,9 @@ void  HttpParsing::parseInternal(const char* buf, int size) {
     StringBuffer headerValue;
 
     int bodyLength = 0;
-
+    _nextPos = 0;
+    _decodeState = HttpRequestDecodeState::START;
+    //初始化
     char* p0 = const_cast<char*>(buf + _nextPos);//去掉const限制
 
     while (_decodeState != HttpRequestDecodeState::INVALID
@@ -47,6 +50,7 @@ void  HttpParsing::parseInternal(const char* buf, int size) {
 
 
         char ch = *p0;//当前的字符
+        printf("%c", ch);
         char* p = p0++;//指针偏移
         int scanPos = _nextPos++;//下一个指针往后偏移
         switch (_decodeState) {

@@ -76,12 +76,20 @@
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
     <ClCompile Include="clienthandle.cpp" />
+    <ClCompile Include="cookieverify.cpp" />
     <ClCompile Include="httpparsing.cpp" />
+    <ClCompile Include="HttpRespond.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="servermysql.cpp" />
+    <ClCompile Include="tools.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="clienthandle.h" />
+    <ClInclude Include="cookieverify.h" />
+    <ClInclude Include="tools.h" />
     <ClInclude Include="httpparsing.h" />
+    <ClInclude Include="HttpRespond.h" />
+    <ClInclude Include="servermysql.h" />
     <ClInclude Include="server.h" />
     <ClInclude Include="serverepoll.h" />
     <ClInclude Include="serversocket.h" />
@@ -89,9 +97,13 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>-lpthread;$(StlAdditionalDependencies);%(Link.AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);/usr/lib/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>-lpthread;$(StlAdditionalDependencies);%(Link.AdditionalDependencies);-lmysqlclient</AdditionalDependencies>
+      <SharedLibrarySearchPath>%(SharedLibrarySearchPath)</SharedLibrarySearchPath>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\linuxwork\Project1\include;/usr/include/mysql/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

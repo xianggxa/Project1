@@ -44,14 +44,16 @@ public:
 	
 	}
 	void start() {
-		printf("服务器已启动\n");
+		printf("server start\n");
 		while (1) {
 			_event_count = epoll_wait(_epollfd, ep_events, EP_EVENTS_SIZE, -1);
 			//阻塞等待事件
 			for (int i = 0; i < _event_count; i++) {
 
 				if (ep_events[i].data.fd == _listenfd) { // 有新的连接建立
+					
 					int newfd = accept(_listenfd, nullptr, nullptr);
+					printf("newconnection %d\n", newfd);
 					_epev.data.fd = newfd;
 					_epev.events = EPOLLIN;
 					epoll_ctl(_epollfd, EPOLL_CTL_ADD, newfd, &_epev);
@@ -60,6 +62,7 @@ public:
 
 				}
 				else if (ep_events[i].events & EPOLLIN) {
+					printf("old \n");
 					ClientHandle* clienthandle = socket_clienthandle_map[ep_events[i].data.fd];
 					int nowfd = ep_events[i].data.fd;
 

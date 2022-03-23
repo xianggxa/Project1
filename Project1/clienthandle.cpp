@@ -5,6 +5,9 @@ ClientHandle::ClientHandle()
 {
 	_userrights = "visitor";//初始权限为游客
 	_httpparsing = new HttpParsing();
+
+	_httprespond = new HttpRespond(_httpparsing);
+	connection = 1;
 }
 
 ClientHandle::~ClientHandle()
@@ -15,9 +18,8 @@ ClientHandle::~ClientHandle()
  void ClientHandle::requesthandle(int connfd)
 {
 		_httpparsing->init(connfd);
-		if (_httpparsing->getLen() <= 0 || _httpparsing->getRequestParams().find("Connection")!= _httpparsing->getRequestParams().end()&& _httpparsing->getRequestParams().find("Connection")->second=="close") {
-			connetion = 0;//断开连接
-		}
+		/*
+		
 		std::cout << "[method]" << _httpparsing->getMethod() << std::endl;
 		std::cout << "[url]" << _httpparsing->getUrl() << std::endl;
 		std::cout << "[request params]" << std::endl;
@@ -33,7 +35,12 @@ ClientHandle::~ClientHandle()
 			std::cout << "   value: " << h.second << std::endl;
 		}
 		std::cout << std::endl;
-		std::cout << "[body]" << _httpparsing->getBody() << std::endl;
+		std::cout << "[body]" << _httpparsing->getBody() << std::endl;*/
+		if (_httpparsing->getLen() <= 0 || _httpparsing->getRequestParams().find("Connection")!= _httpparsing->getRequestParams().end()&& _httpparsing->getRequestParams().find("Connection")->second=="close") {
+			connection = 0;//断开连接
+			printf("connection close\n");
+		}
+		_httprespond->respond(connfd);
 }
 
  ClientHandle* ClientHandle::stahandle(ClientHandle* ptr, int connfd)
@@ -44,5 +51,5 @@ ClientHandle::~ClientHandle()
 
  const bool& ClientHandle::getconnection() const
  {
-	 return connetion;
+	 return connection;
  }

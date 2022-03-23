@@ -5,6 +5,8 @@
 
 #include <string>
 #include "httpparsing.h"
+#include "HttpRespond.h"
+
 class ClientHandle{
 	private:
 		std::string _username;//用户姓名
@@ -13,7 +15,9 @@ class ClientHandle{
 
 		HttpParsing* _httpparsing;//http解析对象
 
-		bool connetion;
+		HttpRespond* _httprespond;//http响应对象
+
+		bool connection;
 public:
 	ClientHandle();
 

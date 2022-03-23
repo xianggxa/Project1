@@ -4,16 +4,35 @@
 
 #include "serverepoll.h"
 #include "serversocket.h"
+//#include "servermysql.h"
 
 #define PORT 80
+int serverlistenfd;
+
+ void serverclose(int p){
+	   close(serverlistenfd);
+		printf("server close\n");
+		exit(0);
+
+	}
 
 class Server {
+    ServerSocket* serversocket;
+	ServerEpoll* serverepoll;
+
+
 public:
+	
 	void run() {
-		ServerSocket* serversocket = new ServerSocket(PORT);
+		signal(SIGINT, serverclose);
+		ServerMysql* servermysql = ServerMysql::getinstance();
+		servermysql->_init("web_server");
+		serversocket = new ServerSocket(PORT);
 		serversocket->init();
-		ServerEpoll* serverepoll = new ServerEpoll(serversocket->getfd());
+		serverlistenfd = serversocket->getfd();
+		serverepoll = new ServerEpoll(serversocket->getfd());
 		serverepoll->start();
+		
 
 	}
 
