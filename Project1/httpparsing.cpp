@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <vector>
+#include <iostream>
 
 //协议解析
 void HttpParsing::tryDecode(const std::string& buf) {
@@ -13,10 +14,34 @@ HttpParsing::~HttpParsing(){}
 
 void HttpParsing::init(int connfd)
 {
-    _reclen = recv(connfd, buf, BUF_SIZE, 0);
+    content = "";
+    iserror = 0;
+    int done = 0;
+    int n_reclen = 0;
+    while (1) {
+        n_reclen = recv(connfd, buf, BUF_SIZE, MSG_DONTWAIT);
+        if (-1 == n_reclen) {
+            if (EAGAIN != errno) {
+                perror("Read data");
+                done = 1;
+            }
+            break;
+        }
+        else if (!n_reclen) {
+            std::cout << "recv 0\n";
+            done = 1;
+            break;
+        }
+        content += std::string(buf, buf + n_reclen);
+
+    }
+    _reclen = content.length();
+   
     printf("http %d\n", _reclen);
-    
-    parseInternal(buf, _reclen);
+    iserror = done;
+    if (!done)
+        parseInternal(content.c_str(), _reclen);
+    //else std::cout << content<<"\n";
 }
 
 //解析请求行
@@ -50,7 +75,7 @@ void  HttpParsing::parseInternal(const char* buf, int size) {
 
 
         char ch = *p0;//当前的字符
-        printf("%c", ch);
+        //printf("%c", ch);
         char* p = p0++;//指针偏移
         int scanPos = _nextPos++;//下一个指针往后偏移
         switch (_decodeState) {
@@ -367,5 +392,10 @@ const std::string& HttpParsing::getBody() const {
 const int& HttpParsing::getLen() const
 {
     return _reclen;
+}
+
+const bool HttpParsing::getError() const
+{
+    return iserror;
 }
 

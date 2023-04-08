@@ -2,7 +2,9 @@
 #include <iostream>
 
 
-HttpRespond::~HttpRespond(){}
+HttpRespond::~HttpRespond(){
+	
+}
 
 void HttpRespond::respond(int connfd)
 {
@@ -14,8 +16,15 @@ void HttpRespond::respond(int connfd)
 		std::string head("HTTP/1.1 200 OK\r\n");
 		head += "Contene-Type: text/html\r\n";
 		head += "Content-Length: " + std::to_string(_filelen) + "\r\n\r\n";
-		send(connfd, head.c_str(), head.length(), 0);
-		Tools::_send(connfd, _filecontent, _filelen);
+		//send(connfd, head.c_str(), head.length(), 0);
+		//Tools::_send(connfd, _filecontent, _filelen);
+		int headlen = head.length();
+		send_content = new char[_filelen + 1 + headlen];
+		memcpy(send_content, head.c_str(), headlen);
+		memcpy(send_content + headlen, _filecontent, _filelen);
+		delete []_filecontent;
+		send_content[_filelen + headlen] = '\0';
+		send_content_len = _filelen + headlen;
 		
 		
 	}
@@ -31,7 +40,7 @@ void HttpRespond::respond(int connfd)
 		
 		std::string _url = Tools::deescapeURL(httpparsing->getUrl());
 		std::string _file;
-		std::unordered_map<std::string, std::string> pro_val;
+		std::map<std::string, std::string> pro_val;
 		std::string _property;
 		std::string _val;
 		int _len = _url.length();
@@ -100,7 +109,7 @@ void HttpRespond::respond(int connfd)
 			std::string in_ti_string = "artist"; //插入标题的字符串
 
 	        //第二次查询应当显示在当前界面的对象
-			sql_query = "select * from artist_preview limit " + std::to_string((n_page-1)*ARTIST_PAGE_MAX)+","+std::to_string(ARTIST_PAGE_MAX)+";";
+			sql_query = "select * from artist_preview order by order_number limit " + std::to_string((n_page-1)*ARTIST_PAGE_MAX)+","+std::to_string(ARTIST_PAGE_MAX)+";";
 			if (servermysql->_mysql_query(sql_query)) {
 				return;
 			}
@@ -113,11 +122,11 @@ void HttpRespond::respond(int connfd)
 			//std::cout << "row_num=" << row_num << "\n";
 			while (row != NULL )//图片显示动态html生成
 			{
-				std::cout << "n_row=" << n_row << "\n";
+				//std::cout << "n_row=" << n_row << "\n";
 				std::string n_artist_name = row[0];
 				std::string n_preview_path = row[1];
 				n_preview_path = Tools::escapeURL(n_preview_path);
-				std::cout << n_artist_name << " " << n_preview_path << "\n";
+				//std::cout << n_artist_name << " " << n_preview_path << "\n";
 				std::string n_string = "<div class=\"fh5co-project masonry-brick\">"
 					"<a href = \"artistpage@artist=" + n_artist_name + "@page=1"+"\">"
 					"<img src = \"" + n_preview_path + "\" alt = \"Free HTML5 by FreeHTML5.co\" width = \"300px\">"
@@ -152,28 +161,28 @@ void HttpRespond::respond(int connfd)
 			
 			std::string find_ = "clearfix masonry\">";
 
-			int _pos = Tools::KMP(htmlcontent, find_);
+			int _pos = htmlcontent->find(find_) + find_.size();
 			//printf("%d\n",_pos);
 			if (_pos == -1) {
-				printf("kmp faile 1\n");
+				printf("find faile 1\n");
 				return;
 			}
 			htmlcontent->insert(_pos, in_pi_string);
 
 			find_ = "pagination\">";
 			//std::cout << "1\n";
-			_pos = Tools::KMP(htmlcontent, find_);
+			_pos = htmlcontent->find(find_) + find_.size();
 			//printf("%d\n", _pos);
 			if (_pos == -1) {
-				printf("kmp faile 2\n");
+				printf("find faile 2\n");
 				return;
 			}
 			htmlcontent->insert(_pos, in_pa_string);
 
 			find_ = "id=\"ti_insert\">";
-			_pos = Tools::KMP(htmlcontent, find_);
+			_pos = htmlcontent->find(find_) + find_.size();
 			if (_pos == -1) {
-				printf("kmp faile 3\n");
+				printf("find faile 3\n");
 				return;
 			}
 			htmlcontent->insert(_pos, in_ti_string);
@@ -184,12 +193,19 @@ void HttpRespond::respond(int connfd)
 			std::string head("HTTP/1.1 200 OK\r\n");
 			head += "Contene-Type: text/html; charset=utf-8\r\n";
 			head += "Content-Length: " + std::to_string(htmlcontent->length()) + "\r\n\r\n";
-			std::cout<<
-			send(connfd, head.c_str(), head.length(), 0);
+			//std::cout<<
+			//send(connfd, head.c_str(), head.length(), 0);
 			//send(connfd, n_content, htmlcontent->length(), 0);
-			Tools::_send(connfd, n_content, htmlcontent->length());
+			//Tools::_send(connfd, n_content, htmlcontent->length());
+			/**/
+			int headlen = head.length();
+			send_content = new char[htmlcontent->length() + 1 + headlen];
+			memcpy(send_content, head.c_str(), headlen);
+			memcpy(send_content + headlen, htmlcontent->c_str(), htmlcontent->length());
+			//send_content[htmlcontent->length() + headlen] = '\0';
+			send_content_len = htmlcontent->length() + headlen;
 
-			//delete htmlcontent;
+			delete htmlcontent;
             
 
 		}
@@ -240,7 +256,7 @@ void HttpRespond::respond(int connfd)
 				std::string work_name = row[0];
 				std::string n_preview_path = row[1];
 				n_preview_path = Tools::escapeURL(n_preview_path);//编码为utf8防止浏览器判断符号错误
-				std::cout << work_name << " " << n_preview_path << "\n";
+				//std::cout << work_name << " " << n_preview_path << "\n";
 				std::string n_string = "<div class=\"fh5co-project masonry-brick\">"
 					"<a href = \"workpage@artist=" + pro_val["artist"] + "@work=" + work_name + "@page=1\">"
 					"<img src = \"" + n_preview_path + "\" alt = \"Free HTML5 by FreeHTML5.co\" width = \"300px\">"
@@ -273,12 +289,12 @@ void HttpRespond::respond(int connfd)
 			std::string* htmlcontent = new std::string(_filecontent);
 			delete []_filecontent;
 			std::string find_ = "clearfix masonry\">";
-			int _pos = Tools::KMP(htmlcontent, find_);
+			int _pos = htmlcontent->find(find_) + find_.size();
 			htmlcontent->insert(_pos, in_pi_string);
 
 			find_ = "pagination\">";
 			std::cout << "1\n";
-			_pos = Tools::KMP(htmlcontent, find_);
+			_pos = htmlcontent->find(find_) + find_.size();
 			
 			if (_pos == -1) {
 				printf("kmp faile 2\n");
@@ -287,7 +303,7 @@ void HttpRespond::respond(int connfd)
 			htmlcontent->insert(_pos, in_pa_string);
 
 			find_ = "id=\"ti_insert\">";
-			_pos = Tools::KMP(htmlcontent, find_);
+			_pos = htmlcontent->find(find_) + find_.size();
 			if (_pos == -1) {
 				printf("kmp faile 3\n");
 				return;
@@ -299,10 +315,16 @@ void HttpRespond::respond(int connfd)
 			std::string head("HTTP/1.1 200 OK\r\n");
 			head += "Contene-Type: text/html; charset=utf-8\r\n";
 			head += "Content-Length: " + std::to_string(htmlcontent->length()) + "\r\n\r\n";
-			send(connfd, head.c_str(), head.length(), 0);
-			Tools::_send(connfd, n_content, htmlcontent->length());
+			//send(connfd, head.c_str(), head.length(), 0);
+			//Tools::_send(connfd, n_content, htmlcontent->length());
+			/**/
+			int headlen = head.length();
+			send_content = new char[htmlcontent->length() + 1 + headlen];
+			memcpy(send_content, head.c_str(), headlen);
+			memcpy(send_content + headlen, htmlcontent->c_str(), htmlcontent->length());
+			send_content_len = htmlcontent->length() + headlen;
 
-			//delete htmlcontent;
+			delete htmlcontent;
 
 
 		}
@@ -371,11 +393,11 @@ void HttpRespond::respond(int connfd)
 		std::string* htmlcontent = new std::string(_filecontent);
 		delete[]_filecontent;
 		std::string find_ = "clearfix masonry\">";
-		int _pos = Tools::KMP(htmlcontent, find_);
+		int _pos = htmlcontent->find(find_) + find_.size();
 		htmlcontent->insert(_pos, in_pi_string);
 
 		find_ = "pagination\">";
-		_pos = Tools::KMP(htmlcontent, find_);
+		_pos = htmlcontent->find(find_) + find_.size();
 
 		if (_pos == -1) {
 			printf("kmp faile 2\n");
@@ -384,7 +406,7 @@ void HttpRespond::respond(int connfd)
 		htmlcontent->insert(_pos, in_pa_string);
 
 		find_ = "id=\"ti_insert\">";
-		_pos = Tools::KMP(htmlcontent, find_);
+		_pos = htmlcontent->find(find_) + find_.size();
 		if (_pos == -1) {
 			printf("kmp faile 3\n");
 			return;
@@ -396,8 +418,15 @@ void HttpRespond::respond(int connfd)
 		std::string head("HTTP/1.1 200 OK\r\n");
 		head += "Contene-Type: text/html; charset=utf-8\r\n";
 		head += "Content-Length: " + std::to_string(htmlcontent->length()) + "\r\n\r\n";
-		send(connfd, head.c_str(), head.length(), 0);
-		Tools::_send(connfd, n_content, htmlcontent->length());
+		 //send(connfd, head.c_str(), head.length(), 0);
+		//Tools::_send(connfd, n_content, htmlcontent->length());
+		/**/
+		int headlen = head.length();
+		send_content = new char[htmlcontent->length() + 1 + headlen];
+		memcpy(send_content, head.c_str(), headlen);
+		memcpy(send_content + headlen, htmlcontent->c_str(), htmlcontent->length());
+		send_content_len = htmlcontent->length() + headlen;
+		delete htmlcontent;
 
 		}
 		else if (_file == "viewpage") {
@@ -447,7 +476,7 @@ void HttpRespond::respond(int connfd)
 		path = "\"" + path + "\";\nvar page = " + std::to_string(n_page)+";";
 
 		std::string find_ = "id=\"ti_insert\">";
-		int _pos = Tools::KMP(htmlcontent, find_);
+		int _pos = htmlcontent->find(find_) + find_.size();
 		if (_pos == -1) {
 			printf("kmp faile 1\n");
 			return;
@@ -455,7 +484,7 @@ void HttpRespond::respond(int connfd)
 		htmlcontent->insert(_pos, in_ti_string);
 		 
 		find_ = "id=\"pic\" src =";
-		_pos = Tools::KMP(htmlcontent, find_);
+		_pos = htmlcontent->find(find_) + find_.size();
 		if (_pos == -1) {
 			printf("kmp faile 2\n");
 			return;
@@ -463,7 +492,7 @@ void HttpRespond::respond(int connfd)
 		htmlcontent->insert(_pos, in_pic_path);
 
 		find_ = "var src_vec =";
-		_pos = Tools::KMP(htmlcontent, find_);
+		_pos = htmlcontent->find(find_) + find_.size();
 		if (_pos == -1) {
 			printf("kmp faile 3\n");
 			return;
@@ -471,7 +500,7 @@ void HttpRespond::respond(int connfd)
 		htmlcontent->insert(_pos, in_vec);
 
 		find_ = "var path =";
-		_pos = Tools::KMP(htmlcontent, find_);
+		_pos = htmlcontent->find(find_) + find_.size();
 		if (_pos == -1) {
 			printf("kmp faile 4\n");
 			return;
@@ -479,7 +508,7 @@ void HttpRespond::respond(int connfd)
 		htmlcontent->insert(_pos, path);
 
 		find_ = "id=\"directory\">";
-		_pos = Tools::KMP(htmlcontent, find_);
+		_pos = htmlcontent->find(find_) + find_.size();
 		if (_pos == -1) {
 			printf("kmp faile 5\n");
 			return;
@@ -491,8 +520,16 @@ void HttpRespond::respond(int connfd)
 		std::string head("HTTP/1.1 200 OK\r\n");
 		head += "Contene-Type: text/html; charset=utf-8\r\n";
 		head += "Content-Length: " + std::to_string(htmlcontent->length()) + "\r\n\r\n";
-		send(connfd, head.c_str(), head.length(), 0);
-		Tools::_send(connfd, n_content, htmlcontent->length());
+		//send(connfd, head.c_str(), head.length(), 0);
+		//Tools::_send(connfd, n_content, htmlcontent->length());
+		/**/
+		int headlen = head.length();
+		send_content = new char[htmlcontent->length() + 1 + headlen];
+		memcpy(send_content, head.c_str(), headlen);
+		memcpy(send_content + headlen, htmlcontent->c_str(), htmlcontent->length());
+		send_content_len = htmlcontent->length() + headlen;
+
+		delete htmlcontent;
 
 
 		}
@@ -512,9 +549,18 @@ void HttpRespond::respond(int connfd)
 		//strcpy(head_content, head.c_str());
 		//strcat(head_content, _filecontent);
 		//delete []_filecontent;
-
-		Tools::senthreadpool->commit(Tools::file_send, connfd, _filecontent, _filelen, head);
+		/**/
+		int headlen = head.length();
+		send_content = new char[_filelen + 1 + headlen];
+		memcpy(send_content, head.c_str(), headlen);
 		
+		memcpy(send_content + headlen, _filecontent, _filelen );
+		send_content_len = _filelen + headlen;
+
+		
+
+		//Tools::senthreadpool->commit(Tools::file_send, connfd, _filecontent, _filelen, head);
+		delete[] _filecontent;
 		
 		}
 		
@@ -564,7 +610,11 @@ void HttpRespond::respond(int connfd)
 
 			std::string head("HTTP/1.1 200 OK\r\n");
 			head += "Set-Cookie: "+ user_name + "=" + cookie_ +"\r\n\r\n";
-			send(connfd, head.c_str(), head.length(), 0);
+			/**/
+			int headlen = head.length();
+			send_content = new char[headlen + 1];
+			memcpy(send_content, head.c_str(), headlen);
+			//send(connfd, head.c_str(), head.length(), 0);
 
 
 		}
@@ -574,6 +624,8 @@ void HttpRespond::respond(int connfd)
 
 HttpRespond::HttpRespond(HttpParsing* httpparsing) {
 	this->httpparsing = httpparsing;
+	send_content = nullptr;
+	send_content_len = 0;
 
 }
 

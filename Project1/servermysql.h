@@ -20,6 +20,9 @@ public:
 	static ServerMysql* getinstance() {
 		return _mysql;
 	}
+	static void delinstance() {
+		delete _mysql;
+	}
 	inline void _init(std::string database_name) {
 		
 		mysql_init(&mysql);
@@ -32,6 +35,7 @@ public:
 		std::lock_guard<std::mutex> mylock_guard(mtx);
 		if (mysql_real_query(&mysql, query.c_str(), query.length())) {
 			printf("Database query failed\n");
+			printf("%s\n", query);
 			return 1;
 		}return 0;
 

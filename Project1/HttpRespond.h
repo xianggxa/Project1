@@ -22,6 +22,9 @@ class HttpRespond
 	HttpParsing* httpparsing;
 
 public:
+	char* send_content;
+	int send_content_len;
+
 	HttpRespond(HttpParsing* httpparsing);
 
 	~HttpRespond();

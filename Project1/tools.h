@@ -12,17 +12,23 @@
 #include <iostream>
 #include "threadpool.h"
 #include <sys/socket.h>
+#include <sys/stat.h>
 
-#define BUF_SIZE 2048
+#define BUF_SIZE 4096
 
 class Tools {
 public:
 	static std::threadpool* senthreadpool;
 public:
+	static bool is_dir(const char* filefodler) {
+		struct stat   buffer;
+		return (stat(filefodler, &buffer) == 0 && S_ISDIR(buffer.st_mode));
+	}
+
 	static char* readfile(const char* _filepath, int& _filelen) {//文件读取函数
 		FILE* file = fopen(_filepath, "rb");
-
-		if (!file) {
+		
+		if (!file||is_dir(_filepath)) {
 			//printf("%s path no exist \n", _filepath);
 			std::string _s = _filepath;
 			_s+="@path no exist\n";
@@ -42,7 +48,33 @@ public:
 		return _filebuf;
 
 	}
-	static void _send(int connfd, char* _filecontent, int _filelen) {//大报文发送
+	static void _send(int connfd, char* _filecontent, int _filelen) {//报文发送
+		if (_filecontent == nullptr)return;
+		printf("sending\n");
+		char buf[BUF_SIZE];
+		for (int i = 0, _size = 0; i < _filelen; i += BUF_SIZE) {
+			if (i + BUF_SIZE + 1 > _filelen) {
+				_size = _filelen - i;
+			}
+			else {
+				_size = BUF_SIZE;
+			}
+			memcpy(buf, _filecontent + i, _size);
+			try {
+				send(connfd, buf, _size, MSG_NOSIGNAL);
+
+			}
+			catch (...) {
+				printf("send error fd=%d", connfd);
+			}
+			
+
+		}
+		delete[]_filecontent;
+
+	}
+	static void r_send(int connfd, char* _filecontent, int _filelen) {
+		/*
 		char buf[BUF_SIZE];
 		for (int i = 0, _size = 0; i < _filelen; i += BUF_SIZE) {
 			if (i + BUF_SIZE + 1 > _filelen) {
@@ -55,8 +87,30 @@ public:
 
 			send(connfd, buf, _size, 0);
 
+		}*/
+		if (_filecontent == nullptr)return;
+		int writelen;
+		int need_sendlen = _filelen;
+		//printf("%s\n\n", _filecontent);
+		while (need_sendlen > 0) {
+			writelen = send(connfd, _filecontent + _filelen - need_sendlen, need_sendlen, MSG_DONTWAIT);
+
+			if (-1 == writelen) {
+				if (EAGAIN != errno) {
+					perror("Read data");
+				}
+				break;
+
+			}
+			else if (!writelen) {
+				break;
+
+			}
+			need_sendlen -= writelen;
+			//printf("need:%d writen:%d", need_sendlen, writelen);
 		}
-		delete []_filecontent;
+
+		
 
 	}
 	static void file_send(int connfd, char* _filecontent, int _filelen, std::string& head) {

@@ -74,6 +74,9 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <EnableASAN>true</EnableASAN>
+  </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="clienthandle.cpp" />
     <ClCompile Include="cookieverify.cpp" />
@@ -81,11 +84,13 @@
     <ClCompile Include="HttpRespond.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="servermysql.cpp" />
+    <ClCompile Include="timer.cpp" />
     <ClCompile Include="tools.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="clienthandle.h" />
     <ClInclude Include="cookieverify.h" />
+    <ClInclude Include="timer.h" />
     <ClInclude Include="tools.h" />
     <ClInclude Include="httpparsing.h" />
     <ClInclude Include="HttpRespond.h" />

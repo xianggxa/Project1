@@ -38,6 +38,7 @@ int  main()
 /*	*/
 	Server* server = new Server();
 	server->run();
+	delete server;
 	
 	
 /*	

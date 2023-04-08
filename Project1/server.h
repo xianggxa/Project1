@@ -32,6 +32,9 @@ public:
 		serverlistenfd = serversocket->getfd();
 		serverepoll = new ServerEpoll(serversocket->getfd());
 		serverepoll->start();
+		ServerMysql::delinstance();
+		delete serverepoll;
+		delete serversocket;
 		
 
 	}

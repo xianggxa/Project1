@@ -13,13 +13,15 @@ ClientHandle::ClientHandle()
 ClientHandle::~ClientHandle()
 {
 	delete _httpparsing;
+	delete _httprespond;
 }
 
  void ClientHandle::requesthandle(int connfd)
 {
 		_httpparsing->init(connfd);
-		/*
+		this->connfd = connfd;
 		
+		/*
 		std::cout << "[method]" << _httpparsing->getMethod() << std::endl;
 		std::cout << "[url]" << _httpparsing->getUrl() << std::endl;
 		std::cout << "[request params]" << std::endl;
@@ -36,16 +38,42 @@ ClientHandle::~ClientHandle()
 		}
 		std::cout << std::endl;
 		std::cout << "[body]" << _httpparsing->getBody() << std::endl;*/
-		if (_httpparsing->getLen() <= 0 || _httpparsing->getRequestParams().find("Connection")!= _httpparsing->getRequestParams().end()&& _httpparsing->getRequestParams().find("Connection")->second=="close") {
-			connection = 0;//断开连接
+		do {
+			if (_httpparsing->getLen() <= 0 || _httpparsing->getError()) {
+				connection = false;//断开连接
+				printf("connection error 1\n");
+				break;
+
+			}
+			else if (_httpparsing->getHeaders().find("Connection") == _httpparsing->getHeaders().end() || _httpparsing->getHeaders().find("Connection")->second == "close") {
+				connection = false;//断开连接
+				printf("connection close 2\n");
+			}
+			_httprespond->respond(connfd);
+		} while (0);
+		/*
+		if (_httpparsing->getLen() <= 0 || _httpparsing->getRequestParams().find("Connection")!= _httpparsing->getRequestParams().end()&& _httpparsing->getRequestParams().find("Connection")->second=="close"||_httpparsing->getError()) {
+			connection = false;//断开连接
 			printf("connection close\n");
 		}
-		_httprespond->respond(connfd);
+		else {
+			_httprespond->respond(connfd);
+
+		}*/
+		//if (!_httpparsing->getError())
+			
+		//else connection = 0;//出现错误断开连接
 }
+
+ void ClientHandle::requestinit(int connfd)
+ {
+	 _httpparsing->init(connfd);
+ }
 
  ClientHandle* ClientHandle::stahandle(ClientHandle* ptr, int connfd)
  {
 	 ptr->requesthandle(connfd);
+	 ptr->send_content();
 	 return ptr;
  }
 
@@ -53,3 +81,16 @@ ClientHandle::~ClientHandle()
  {
 	 return connection;
  }
+ const int& ClientHandle::getfd() const
+ {
+	 return connfd;
+ }
+
+ void ClientHandle::send_content()
+ {
+	 //printf("connfd=%d\n", connfd);
+	 Tools::_send(this->connfd, _httprespond->send_content, _httprespond->send_content_len);
+	 _httprespond->send_content = nullptr;
+	 _httprespond->send_content_len = 0;
+ }
+

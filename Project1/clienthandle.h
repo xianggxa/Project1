@@ -18,16 +18,24 @@ class ClientHandle{
 		HttpRespond* _httprespond;//httpÏìÓ¦¶ÔÏó
 
 		bool connection;
+
+		int connfd;
 public:
 	ClientHandle();
 
 	~ClientHandle(); 
 
 	void requesthandle(int connfd);
+	
+	void requestinit(int connfd);
 
 	static ClientHandle* stahandle(ClientHandle* ptr, int connfd);
 
 	const bool& getconnection() const;
+
+	const int& getfd() const;
+
+	void send_content();
 
 
 };
